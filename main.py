@@ -14,6 +14,8 @@ import discord
 import random
 import re
 import os
+version = 'v0.2.1'
+
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -373,23 +375,31 @@ async def on_message(message):
     global user_id
     if message.author == client.user:
         return
+    elif message.content.startswith('!!error!!'):
+        await message.channel.send(random.choice(error_message))
+    elif message.content.startswith('!version'):
+        await message.channel.send(f"{version}")
+    elif message.content.startswith('!info'):
+        await message.channel.send('''
+**About:**
+This program aims to act as a balanced "weighted die". It skews towards more favorable results while punishing too many of them.  This offers the chance to have passible rolls without breaking the game and still allows for low/nat-1 rolls - those can be fun too!
+                                    ''')
     elif message.content.startswith('!help'):
         await message.channel.send('''
 **Commands:**
 ~~-----------------------------------------------------~~
 **!help** - Displays this help message.
-**!roll** <die count><die type> - Rolls a die of the specified type (e.g. !roll 3d4). Multiple rolls can be made by separating the die types with commas (e.g., **!roll** 3d4, 2d6). 
-**!roll** <die count><die type> +-<modifier> - Rolls a die of the specified type and applies a modifier (e.g., !roll 3d4 +2, !roll 3d4 -2)
-**!roll** d20a - Rolls a D20 with advantage.
-**!roll** d20d - Rolls a D20 with disadvantage.
+**!roll <die count><die type>** - Rolls a die of the specified type (*e.g. !roll 3d4*). Multiple rolls can be made by separating the die types with commas (*e.g., !roll 3d4, 2d6*). 
+**!roll <die count><die type> +-<modifier>** - Rolls a die of the specified type and applies a modifier (e.g., !roll 3d4 +2, !roll 3d4 -2)
+**!roll d20a** - Rolls a D20 with advantage.
+**!roll d20d** - Rolls a D20 with disadvantage.
 **!info** - Displays information about the bot.
 ~~------------------------------------------------------~~
-                                    ''')
-        
+                                    ''')        
     elif message.content.lower().startswith("!roll"):
         user_id = message.author.id
         print(f'user_id: {user_id}') # Debugging line to check user ID
-        request = message.content[5:].strip().lower()
+        request = message.content[6:].strip().lower()
         print(f'Request: {request}') # Debugging line to check the stripped content of the message
 
         rolls = extract_dices(request)
@@ -401,80 +411,77 @@ async def on_message(message):
         total = 0
         dice_type = 0
         die_roll = 0
+        try: 
+            if 'd20a' in request:
+                result = d20.roll_twice(request)
+                die_roll = str(max(result))
+                results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
+                total += max(result)
+                total += sum(modifiers)
+                results.append(f'||(from a D{result[0]} and D{result[1]})||')
+            elif 'd20d' in request:
+                result = d20.roll_twice(request)
+                die_roll = str(min(result))
+                results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
+                total += min(result)
+                total += sum(modifiers)
+                results.append(f'||(from a D{result[0]} and D{result[1]})||')
+            for roll_str in rolls:
+                num_dice, dice_type = map(int, roll_str.split("d"))
+                if dice_type == 4:
+                    for i in range(num_dice):
+                        result = d4.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'(from {num_dice}D4)')
+                elif dice_type == 6:
+                    for i in range(num_dice):
+                        result = d6.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'(from {num_dice}D6)')
+                elif dice_type == 8:
+                    for i in range(num_dice):
+                        result = d8.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'(from {num_dice}D8)')
+                elif dice_type == 10:
+                    for i in range(num_dice):
+                        result = d10.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'(from {num_dice}D10)')
+                elif dice_type == 12:
+                    for i in range(num_dice):
+                        result = d12.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'(from {num_dice}D12)')
+                elif dice_type == 20:
+                    for i in range(num_dice):
+                        result = d20.roll(request)
+                        die_roll = str(result)
+                        results.append(str(result))
+                        total += result
+                    results.append(f'(from {num_dice}D20)')
+                total += sum(modifiers) # Add modifiers
+            print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
+            print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
+            print(f'results:{results}') # Debugging line to check the initial state of 'results' list
+            print(f'total:{total}') # Debugging line to check the initial state of 'total'
+            print(f'user_rolls: {user_rolls}') # Debugging line to check the state of 'user_rolls'
+            print(f'D4 Avg: {d4.avg_roll}')
+            print(f'D6 Avg: {d6.avg_roll}')
+            print(f'D8 Avg: {d8.avg_roll}')
+            print(f'D10 Avg: {d10.avg_roll}')
+            print(f'D12 Avg: {d12.avg_roll}')
+            print(f'D20 Avg: {d20.avg_roll}')
         
-
-
-    try: 
-        if 'd20a' in request:
-            result = d20.roll_twice(request)
-            die_roll = str(max(result))
-            results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-            total += max(result)
-            total += sum(modifiers)
-            results.append(f'||(from a D{result[0]} and D{result[1]})||')
-        elif 'd20d' in request:
-            result = d20.roll_twice(request)
-            die_roll = str(min(result))
-            results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-            total += min(result)
-            total += sum(modifiers)
-            results.append(f'||(from a D{result[0]} and D{result[1]})||')
-        for roll_str in rolls:
-            num_dice, dice_type = map(int, roll_str.split("d"))
-            if dice_type == 4:
-                for i in range(num_dice):
-                    result = d4.roll(request)
-                    results.append((str(result)))
-                    total += result
-                results.append(f'(from {num_dice}D4)')
-            elif dice_type == 6:
-                for i in range(num_dice):
-                    result = d6.roll(request)
-                    results.append((str(result)))
-                    total += result
-                results.append(f'(from {num_dice}D6)')
-            elif dice_type == 8:
-                for i in range(num_dice):
-                    result = d8.roll(request)
-                    results.append((str(result)))
-                    total += result
-                results.append(f'(from {num_dice}D8)')
-            elif dice_type == 10:
-                for i in range(num_dice):
-                    result = d10.roll(request)
-                    results.append((str(result)))
-                    total += result
-                results.append(f'(from {num_dice}D10)')
-            elif dice_type == 12:
-                for i in range(num_dice):
-                    result = d12.roll(request)
-                    results.append((str(result)))
-                    total += result
-                results.append(f'(from {num_dice}D12)')
-            elif dice_type == 20:
-                for i in range(num_dice):
-                    result = d20.roll(request)
-                    die_roll = str(result)
-                    results.append(str(result))
-                    total += result
-                results.append(f'(from {num_dice}D20)')
-            total += sum(modifiers) # Add modifiers
-        print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
-        print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
-        print(f'results:{results}') # Debugging line to check the initial state of 'results' list
-        print(f'total:{total}') # Debugging line to check the initial state of 'total'
-        print(f'user_rolls: {user_rolls}') # Debugging line to check the state of 'user_rolls'
-        print(f'D4 Avg: {d4.avg_roll}')
-        print(f'D6 Avg: {d6.avg_roll}')
-        print(f'D8 Avg: {d8.avg_roll}')
-        print(f'D10 Avg: {d10.avg_roll}')
-        print(f'D12 Avg: {d12.avg_roll}')
-        print(f'D20 Avg: {d20.avg_roll}')
-    
-        
-        if 'd20a' in request or 'd20d' in request or dice_type == 20:
-            if die_roll == '20':
-                await message.channel.send(f'''
+            
+            if 'd20a' in request or 'd20d' in request or dice_type == 20:
+                if die_roll == '20':
+                    await message.channel.send(f'''
 **{message.author.mention}**
 
 **!!CRITICAL SUCCESS!!**
@@ -482,10 +489,10 @@ Die Results: **{die_roll}!!**, ({', '.join(results)})
 Modifiers: {sum(modifiers)},
 
 How exciting!!
-                                ''')
-        
-            elif die_roll == '1':
-                await message.channel.send(f'''
+                                    ''')
+            
+                elif die_roll == '1':
+                    await message.channel.send(f'''
 **{message.author.mention}**
 
 **!!CRITICAL FAILURE!!**
@@ -493,35 +500,51 @@ Die Results: **{die_roll}!!**, ({', '.join(results)})
 Modifiers: {sum(modifiers)},
 
 How unfortunate...
-                                ''')
-                
-            else:
-                await message.channel.send(f'''
+                                    ''')
+                    
+                else:
+                    await message.channel.send(f'''
 **{message.author.mention}**
 
 Die Results: {', '.join(results)},
 Modifiers: {sum(modifiers)}, 
 **Total: {total}**
-                                ''')
-        else:                               
-            await message.channel.send(f'''
+                                    ''')
+            else:                               
+                await message.channel.send(f'''
 **{message.author.mention}**
 
 Die Results {', '.join(results)}, 
 Modifiers: {sum(modifiers)}, 
 **Total: {total}**
-                    ''')
+                        ''')
 
-    except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
-        traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
-        await message.channel.send('Kadie broke it again! Please try again later.') # Send a message to the channel indicating that there was an error with the request.
-        return # Return from the function to stop further execution if an error occurs.
 
-    if message.content.startswith('!info'):
-        await message.channel.send('''
-This program aims to act as a balanced "weighted die". It skews towards more favorable results while punishing too many of them.  This offers the chance to have passible rolls without breaking the game and still allows for low/nat-1 rolls - those can be fun too!
 
-**Type !help for commands**
-                                ''')   
+        except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
+            traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
+            e_message = random.choice(error_message)
+            await message.channel.send(e_message) # Send a message to the channel indicating that there was an error with the request.
+            return # Return from the function to stop further execution if an error occurs.
+        
+error_message = [
+    'Kadie broke it again! Please try again later.',
+    'Stop breaking things please.',
+    'Didn\'t you see that I was already working, but now...',
+    'Please don\'t break it again.',
+    'You know I\'m trying to do my job here, right?',
+    'You\'re not helping me at all!',
+    'Why do you always have to break things?',
+    'Can you please stop breaking my stuff?',
+    'I can\'t believe you did that again.',
+    'It seems like every time I turn around, something is broken.',
+    'You\'re making my job really difficult.',
+    'I\'m sorry, but I\'m not going to tolerate this anymore.',
+    'I blame the dogs..',
+    'I blame the cats..',
+    'I blame the birds..',
+    'I blame the fish..',
+    'Who\'s to ready for chess??',
+]
 
 client.run(os.getenv('BOT_TOKEN'))
