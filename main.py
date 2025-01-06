@@ -477,4 +477,4 @@ error_message = [
     'I blame the fish..',
     'Who\'s to ready for chess??',
 ]
-client.run('MTMyMzYzNDk2Mjc0MTg1NDIwOQ.G7CgLe.JujAyltZDJYe62VKayYzG82FmFapOG1_gtlXzI') #os.getenv('BOT_TOKEN'))
+client.run(os.getenv('BOT_TOKEN'))
