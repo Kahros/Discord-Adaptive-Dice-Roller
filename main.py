@@ -17,7 +17,7 @@ import random
 import re
 import os
 # ---------------------------------------------------
-version = 'v0.3.1'
+version = 'v0.3.2'
 # ---------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True
