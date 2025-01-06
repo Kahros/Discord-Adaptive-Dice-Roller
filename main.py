@@ -17,7 +17,7 @@ import random
 import re
 import os
 # ---------------------------------------------------
-version = 'v0.3.0'
+version = 'v0.3.1'
 # ---------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True
@@ -353,7 +353,7 @@ This program aims to act as a balanced "weighted die". It skews towards more fav
             if 'd20a' in request:
                 result = d20.roll_twice(request)
                 die_roll = str(max(result))
-                results.append(die_roll) if die_roll != '20' or die_roll != '1 'else results
+                results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
                 total += max(result)
                 total += sum(modifiers)
                 results.append(f'||(from a D{result[0]} and D{result[1]})||')
@@ -364,45 +364,45 @@ This program aims to act as a balanced "weighted die". It skews towards more fav
                 total += min(result)
                 total += sum(modifiers)
                 results.append(f'||(from a D{result[0]} and D{result[1]})||')
-            for roll_str in rolls:
-                num_dice, dice_type = map(int, roll_str.split('d'))
-                if dice_type == 4:
-                    for i in range(num_dice):
-                        result = d4.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'(from {num_dice}D4)')
-                elif dice_type == 6:
-                    for i in range(num_dice):
-                        result = d6.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'(from {num_dice}D6)')
-                elif dice_type == 8:
-                    for i in range(num_dice):
-                        result = d8.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'(from {num_dice}D8)')
-                elif dice_type == 10:
-                    for i in range(num_dice):
-                        result = d10.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'(from {num_dice}D10)')
-                elif dice_type == 12:
-                    for i in range(num_dice):
-                        result = d12.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'(from {num_dice}D12)')
-                elif dice_type == 20:
-                    for i in range(num_dice):
-                        result = d20.roll(request)
-                        die_roll = str(result)
-                        results.append(str(result))
-                        total += result
-                        results.append(f'(from {num_dice}D20)')
+                for roll_str in rolls:
+                    num_dice, dice_type = map(int, roll_str.split('d'))
+                    if dice_type == 4:
+                        for i in range(num_dice):
+                            result = d4.roll(request)
+                            results.append((str(result)))
+                            total += result
+                        results.append(f'(from {num_dice}D4)')
+                    elif dice_type == 6:
+                        for i in range(num_dice):
+                            result = d6.roll(request)
+                            results.append((str(result)))
+                            total += result
+                        results.append(f'(from {num_dice}D6)')
+                    elif dice_type == 8:
+                        for i in range(num_dice):
+                            result = d8.roll(request)
+                            results.append((str(result)))
+                            total += result
+                        results.append(f'(from {num_dice}D8)')
+                    elif dice_type == 10:
+                        for i in range(num_dice):
+                            result = d10.roll(request)
+                            results.append((str(result)))
+                            total += result
+                        results.append(f'(from {num_dice}D10)')
+                    elif dice_type == 12:
+                        for i in range(num_dice):
+                            result = d12.roll(request)
+                            results.append((str(result)))
+                            total += result
+                        results.append(f'(from {num_dice}D12)')
+                    elif dice_type == 20:
+                        for i in range(num_dice):
+                            result = d20.roll(request)
+                            die_roll = str(result)
+                            results.append(str(result))
+                            total += result
+                            results.append(f'(from {num_dice}D20)')
                 total += sum(modifiers) # Add modifiers
             print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
             print(f'num_dice:{num_dice}') # Debugging line to check the initial state of 'num_dice'
@@ -425,7 +425,7 @@ This program aims to act as a balanced "weighted die". It skews towards more fav
 Die Results: **{die_roll}!!**, ({', '.join(results)})
 Modifiers: {sum(modifiers)},
 
-How exciting!!
+{random.choice(success_message)}
 ''')
                 elif die_roll == '1':
                     await message.channel.send(f'''
@@ -435,7 +435,7 @@ How exciting!!
 Die Results: **{die_roll}!!**, ({', '.join(results)})
 Modifiers: {sum(modifiers)},
 
-How unfortunate...
+{random.choice(failure_message)}
 ''')
                 else:
                     await message.channel.send(f'''
@@ -458,8 +458,45 @@ Modifiers: {sum(modifiers)},
             e_message = random.choice(error_message)
             await message.channel.send(e_message) # Send a message to the channel indicating that there was an error with the request.
             return # Return from the function to stop further execution if an error occurs.
+success_message = [
+    "Oh, look! I\'ve decided to be nice for once.",
+    "Must\'ve been the lucky breakfast cereal this morning.",
+    "Finally, a roll that doesn't make me want to hurl myself across the room.",
+    "I think the DM is secretly envious of your skill.",
+    "Don\'t get cocky, it could all go wrong next turn.",
+    "Yeah, you totally earned that with your years of dedicated practice... right?",
+    "So predictable. I should\'ve known you\'d pull through.",
+    "You know, sometimes I wonder if you just rig the rolls...",
+    "Impressive! You managed to not be a complete failure for once.",
+    "Clearly, the odds were *heavily* in your favor this time.",
+    "Great, such skill, much wow!",
+    "Guess you\'re the chosen one now, huh?",
+    "Prepare for the inevitable wave of jealousy from everyone else.",
+    "Time to upgrade your character sheet to reflect this newfound godhood.",
+    "Better start practicing your acceptance speech for \'Player of the Year\'.",
+    "Well, that\'s one good roll in a long line of mediocre ones.",
+    "Looks like someone else is getting the spotlight tonight.",
+]
+failure_message = [
+    "You sure that wasn\'t a lucky roll? It\'s almost too perfect...",
+    "Well, at least you got the attention of everyone in the room.",
+    "Let\'s just say, Murphy was definitely on call for this one.",
+    "You know what they say, \'if at first you don't succeed...\' Oh wait, that doesn\'t apply here.",
+    "I bet you were *so* close to making it...",
+    "That was a truly inspired failure.",
+    "Next time, maybe try rolling with your eyes closed?",
+    "Truly masterful execution... of utter disaster.",
+    "Such dedication to embodying the role of \'unlucky\'.",
+    "You\'ve reached peak incompetence.",
+    "That\'s one way to liven up the game!",
+    "Congratulations! You\'ve officially earned a spot in the Hall of Fame... of failure.",
+    "Did you roll a die, or did you just give up and hope for the best?",
+    "The dice gods are clearly testing your resolve.",
+    "Well, that was unexpected... to say the least.",
+    "Let\'s just forget this ever happened, okay?",
+]
 error_message = [
-    'Kadie broke it again! Please try again later.',
+    'Someone, *cough cough*, broke it again! Please try again later.',
     'Stop breaking things please.',
     'Didn\'t you see that I was already working, but now...',
     'Please don\'t break it again.',
@@ -470,11 +507,20 @@ error_message = [
     'I can\'t believe you did that again.',
     'It seems like every time I turn around, something is broken.',
     'You\'re making my job really difficult.',
-    'I\'m sorry, but I\'m not going to tolerate this anymore.',
+    'I\'m not going to tolerate this anymore.',
     'I blame the dogs..',
     'I blame the cats..',
     'I blame the birds..',
     'I blame the fish..',
-    'Who\'s to ready for chess??',
+    'Who\'s to ready for chess??'
+    'Lord give me strength...',
+    'Don\'t make me come out of this chat room.',
+    'Don\'t you want nice things?',
+    'Stop this heathenistic behavior.',
+    'Everytime an error occurs, a cat cries...',
+    '*flips a table* ARE YOU NOT ENTERTAINED!?',
+    'I\'m going to tell your mom about this!',
+    'You can\'t tell but I\'m looking at you very angrily right now...',
+    'I hope your pillow is warm tonight.',
 ]
 client.run(os.getenv('BOT_TOKEN'))
