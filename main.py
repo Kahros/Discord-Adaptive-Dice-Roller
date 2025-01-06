@@ -166,7 +166,7 @@ class D10():
         roll = 0
         while roll == 0:
             if avg_roll == 0:
-                roll = random.choice(self.standard)
+                roll = random.choice(self.standard())
             elif avg_roll < 3:
                 roll = random.choice(self.high())
             elif avg_roll < 6:
@@ -207,7 +207,7 @@ class D12():
         roll = 0
         while roll == 0:
             if avg_roll == 0:
-                roll = random.choice(self.standard)
+                roll = random.choice(self.standard())
             elif avg_roll < 4:
                 roll = random.choice(self.high())
             elif avg_roll < 9:
