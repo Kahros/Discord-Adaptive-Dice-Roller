@@ -17,7 +17,7 @@ import random
 import re
 import os
 # ---------------------------------------------------
-version = 'v0.3.2'
+version = 'v0.3.3'
 # ---------------------------------------------------
 intents = discord.Intents.default()
 intents.message_content = True
@@ -298,7 +298,7 @@ def extract_modifiers(request):
         modifiers = [0]  
     return modifiers
 def extract_dices(request):
-    dices = re.findall(r'\d+d\d+', request) 
+    dices = re.findall(r'\b\d+d\d+\b', request) 
     return dices
 @client.event
 async def on_ready():
@@ -310,12 +310,18 @@ async def on_message(message):
         return
     elif message.content.startswith('!!error!!'):
         await message.channel.send(random.choice(error_message))
+    elif message.content.startswith('!!success!!'):
+        await message.channel.send(random.choice(success_message))
+    elif message.content.startswith('!!failure!!'):
+        await message.channel.send(random.choice(failure_message))
     elif message.content.startswith('!version'):
         await message.channel.send(f"{version}")
     elif message.content.startswith('!info'):
         await message.channel.send('''
 **About:**
 This program aims to act as a balanced "weighted die". It skews towards more favorable results while punishing too many of them.  This offers the chance to have passible rolls without breaking the game and still allows for low/nat-1 rolls - those can be fun too!
+
+**Type !help for a list of commands.**
 ''')
     elif message.content.startswith('!help'):
         await message.channel.send('''
@@ -335,7 +341,7 @@ This program aims to act as a balanced "weighted die". It skews towards more fav
 **{message.author.mention}**
 
 {coin_flip()}
-                                    ''')    
+''')    
     elif message.content.lower().startswith("!roll"):
         user_id = message.author.id
         print(f'user_id: {user_id}') # Debugging line to check user ID
@@ -354,16 +360,14 @@ This program aims to act as a balanced "weighted die". It skews towards more fav
                 result = d20.roll_twice(request)
                 die_roll = str(max(result))
                 results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-                total += max(result)
-                total += sum(modifiers)
-                results.append(f'||(from a D{result[0]} and D{result[1]})||')
+                total += int(die_roll)
+                results.append(f'||({result[0]} and {result[1]})||')
             elif 'd20d' in request:
                 result = d20.roll_twice(request)
                 die_roll = str(min(result))
                 results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-                total += min(result)
-                total += sum(modifiers)
-                results.append(f'||(from a D{result[0]} and D{result[1]})||')
+                total += int(die_roll)
+                results.append(f'||({result[0]} and {result[1]})||')
                 for roll_str in rolls:
                     num_dice, dice_type = map(int, roll_str.split('d'))
                     if dice_type == 4:
@@ -403,9 +407,8 @@ This program aims to act as a balanced "weighted die". It skews towards more fav
                             results.append(str(result))
                             total += result
                             results.append(f'(from {num_dice}D20)')
-                total += sum(modifiers) # Add modifiers
+            total += sum(modifiers) # Add modifiers
             print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
-            print(f'num_dice:{num_dice}') # Debugging line to check the initial state of 'num_dice'
             print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
             print(f'results:{results}') # Debugging line to check the initial state of 'results' list
             print(f'total:{total}') # Debugging line to check the initial state of 'total'
