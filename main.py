@@ -609,7 +609,7 @@ description='''
 **!coin, !coinflip, !flip** - Flips a coin.
 **!%, !precent, !precentile** - Rolls precentile dice.
 
-**Support dice are D2, D4, D6, D8, D10, D12, D20, D50, D100, precentile**
+**Supported dice are D2, D4, D6, D8, D10, D12, D20, D50, D100, precentile**
 *NOTE: coin, D50, D100, and precentile are not adaptive.*
     ''',
     color=discord.Color.blue())
