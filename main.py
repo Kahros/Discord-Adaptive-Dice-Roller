@@ -610,7 +610,7 @@ description='''
 **!%, !precent, !precentile** - Rolls precentile dice.
 
 **Support dice are D2, D4, D6, D8, D10, D12, D20, D50, D100, precentile**
-*NOTE: D50, D100, and precentile do not support adaptive rolls.*
+*NOTE: coin, D50, D100, and precentile are not adaptive.*
     ''',
     color=discord.Color.blue())
 
