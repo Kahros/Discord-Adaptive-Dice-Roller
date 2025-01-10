@@ -614,4 +614,4 @@ description='''
     ''',
     color=discord.Color.blue())
 
-client.run('MTMyMzYzNDk2Mjc0MTg1NDIwOQ.G7CgLe.JujAyltZDJYe62VKayYzG82FmFapOG1_gtlXzI') #os.getenv('BOT_TOKEN'))
+client.run(os.getenv('BOT_TOKEN'))
