@@ -10,10 +10,10 @@
 # [/] Build docker container for deployment
 # [/] Add error handling
 # [/] Add logging
-# [] Add support for non-leading integer for dice types (e.g., d8, d10)
+# [/] Add support for non-leading integer for dice types (e.g., d8, d10)
 # [] Comment code blocks for future reference
 # [] Strip incoming message to allow for designated dice rolls and modifiers to display seperate totals before adding into final total
-# [] Add support for D2, D50, D100, and precentile dice
+# [/] Add support for D2, D50, D100, and precentile dice
 # ---------------------------------------------------
 import traceback
 import discord
@@ -22,15 +22,23 @@ import re
 import os
 from response import success_message as success, error_message as error, failure_message as failure
 
-global e_message 
+global e_message
+e_message = random.choice(error)
 # ---------------------------------------------------
-version = 'v0.4.3'
+version = 'v0.5.0'
 # ---------------------------------------------------
 intents = discord.Intents.default() # Default intents
 intents.message_content = True # Enable message content
 client = discord.Client(intents=intents) # Create Discord client
 user_rolls = {} # Dictionary to store user rolls, keyed by user ID
 # ---------------------------------------------------
+# D2 die
+class D2():
+    def __init__(self):
+        pass
+    def roll(self, request):
+        return random.randint(1, 2)
+
 # D4 die
 class D4():
     def __init__(self):
@@ -326,13 +334,44 @@ class D20():
     
     def low(self):
         return list(range(1, 21)) + list(range(1, 6))* 2
+
+# D50 die
+class D50():
+    def __init__(self):
+        pass
+    
+    def roll(self, request):
+        return random.choice(list(range(1, 51)))
+# D100 die
+class D100():
+    def __init__(self):
+        pass
+    
+    def roll(self, request):
+        return random.choice(list(range(1, 101)))
+
+# D% die
+class Dpercent():
+    def __init__(self):
+        pass
+    
+    def roll(self):
+        tens = random.choice(list(range(0, 101, 10)))
+        ones = random.choice(list(range(0, 11)))
+        return tens, ones
+
+
 # ---------------------------------------------------
+d2 = D2() # D2 die instance
 d4 = D4() # D4 die instance
 d6 = D6() # D6 die instance
 d8 = D8() # D8 die instance
 d10 = D10() # D10 die instance
 d12 = D12() # D12 die instance
 d20 = D20() # D20 die instance
+d50 = D50() # D50 die instance
+d100 = D100() # D100 die instance
+dpercent = Dpercent() # D% die instance
 # ---------------------------------------------------
 def coin_flip():
     return 'heads' if random.choice([True, False]) else 'tails'
@@ -350,7 +389,8 @@ def extract_modifiers(request):
     return modifiers
 
 def extract_dices(request):
-    dices = re.findall(r'\b\d+d\d+\b', request)
+    request = re.sub(r'(?<!\d)d', '1d', request)
+    dices = re.findall(r'\d+d\d+', request)
     return dices
 
 @client.event
@@ -370,14 +410,27 @@ async def on_message(message):
     elif message.content.startswith('!!failure!!'):
         await message.channel.send(random.choice(failure))
     elif message.content.startswith('!version'):
-        await message.channel.send(embed=discord.Embed(title='Version', description=f'{version}', color=discord.Color.blue()))
+        await message.channel.send(embed=discord.Embed(
+            title='Version', 
+            description=f'{version}', 
+            color=discord.Color.blue()))
     elif message.content.startswith('!info'):
         await message.channel.send(embed=about_embed)
     elif message.content.startswith('!help'):
         await message.channel.send(embed=help_embed)
-    elif message.content.startswith('!coin'):
+    elif message.content.startswith(('!%','!percent','!percentile')):
+        percent = dpercent.roll()
         await message.channel.send(embed=discord.Embed(
-                title=f'{message.author.display_name} got {coin_flip()}!', color=discord.Color.lighter_grey()))
+title=f"{message.author.display_name} rolled a percentile, **%{sum(percent)}**",
+description=f'''
+{'and '.join(map(str, percent))}
+''',
+color=discord.Color.darker_grey()
+            ))
+    elif message.content.startswith(('!coin, !coinflip, !flip')):
+        await message.channel.send(embed=discord.Embed(
+title=f'{message.author.display_name} got {coin_flip()}!', 
+color=discord.Color.lighter_grey()))
     elif message.content.lower().startswith("!roll"):
         user_id = message.author.id
         print(f'user_id: {user_id}') # Debugging line to check user ID
@@ -407,7 +460,13 @@ async def on_message(message):
                 results.append(f'||*({result[0]} and {result[1]})*||')
             else:
                 for roll_str in rolls:
-                    num_dice, dice_type = map(int, roll_str.split('d'))
+                    num_dice, dice_type = map(int,roll_str.split('d'))
+                    if dice_type == 2:
+                        for i in range(num_dice):
+                            result = d2.roll(request)
+                            results.append((str(result)))
+                            total += result
+                        results.append(f'*(from {num_dice}D2)*')
                     if dice_type == 4:
                         for i in range(num_dice):
                             result = d4.roll(request)
@@ -445,6 +504,18 @@ async def on_message(message):
                             results.append(str(result))
                             total += result
                         results.append(f'*(from {num_dice}D20)*')
+                    elif dice_type == 50:
+                        for i in range(num_dice):
+                            result = d50.roll(request)
+                            results.append(str(result))
+                            total += result
+                        results.append(f'*(from {num_dice}D50)*')
+                    elif dice_type == 100:
+                        for i in range(num_dice):
+                            result = d100.roll(request)
+                            results.append(str(result))
+                            total += result
+                        results.append(f'*(from {num_dice}D100)*')
                         
                         total += sum(modifiers) # Add modifiers
             
@@ -491,6 +562,7 @@ Total: **{total}**
 color=discord.Color.red()
 )
             
+            
             if total == 0:
                 await message.channel.send(f'{message.author.display_name}. {e_message}')
                 return
@@ -513,7 +585,6 @@ color=discord.Color.red()
                 await message.channel.send(embed=dice_embed)
         except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
             traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
-            e_message = random.choice(error)
             await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
             return # Return from the function to stop further execution if an error occurs.
         
@@ -535,8 +606,12 @@ description='''
 **!roll d20a** - Rolls a D20 with advantage.
 **!roll d20d** - Rolls a D20 with disadvantage.
 **!info** - Displays information about the bot.
-**!coin** - Flips a coin.
+**!coin, !coinflip, !flip** - Flips a coin.
+**!%, !precent, !precentile** - Rolls precentile dice.
+
+**Support dice are D2, D4, D6, D8, D10, D12, D20, D50, D100, precentile**
+*NOTE: D50, D100, and precentile do not support adaptive rolls.*
     ''',
     color=discord.Color.blue())
 
-client.run(os.getenv('BOT_TOKEN'))
+client.run('MTMyMzYzNDk2Mjc0MTg1NDIwOQ.G7CgLe.JujAyltZDJYe62VKayYzG82FmFapOG1_gtlXzI') #os.getenv('BOT_TOKEN'))
