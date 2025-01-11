@@ -15,6 +15,8 @@
 # [] Strip incoming message to allow for designated dice rolls and modifiers to display seperate totals before adding into final total
 # [/] Add support for D2, D50, D100, and precentile dice
 # ---------------------------------------------------
+version = 'v0.5.0'
+# ---------------------------------------------------
 import traceback
 import discord
 import random
@@ -24,8 +26,6 @@ from response import success_message as success, error_message as error, failure
 
 global e_message
 e_message = random.choice(error)
-# ---------------------------------------------------
-version = 'v0.5.0'
 # ---------------------------------------------------
 intents = discord.Intents.default() # Default intents
 intents.message_content = True # Enable message content
@@ -359,8 +359,6 @@ class Dpercent():
         tens = random.choice(list(range(0, 101, 10)))
         ones = random.choice(list(range(0, 11)))
         return tens, ones
-
-
 # ---------------------------------------------------
 d2 = D2() # D2 die instance
 d4 = D4() # D4 die instance
@@ -431,7 +429,7 @@ color=discord.Color.darker_grey()
         await message.channel.send(embed=discord.Embed(
 title=f'{message.author.display_name} got {coin_flip()}!', 
 color=discord.Color.lighter_grey()))
-    elif message.content.lower().startswith("!roll"):
+    elif message.content.lower().startswith(("!r", "!roll")):
         user_id = message.author.id
         print(f'user_id: {user_id}') # Debugging line to check user ID
         request = message.content[6:].strip().lower()
@@ -562,7 +560,6 @@ Total: **{total}**
 color=discord.Color.red()
 )
             
-            
             if total == 0:
                 await message.channel.send(f'{message.author.display_name}. {e_message}')
                 return
@@ -600,18 +597,29 @@ Type **'!help'** for more information on how to use this bot.
 help_embed = discord.Embed(
 title='**Commands:**',
 description='''
-**!help** - Displays this help message.
-**!roll <die count><die type>** - Rolls a die of the specified type *(e.g. !roll 3d4)*. Multiple rolls can be made by separating the die types with commas *(e.g., !roll 3d4, 2d6)*.
-**!roll <die count><die type> +-<modifier>** - Rolls a die of the specified type and applies a modifier *(e.g., !roll 3d4 +2, !roll 3d4 -2)*.
-**!roll d20a** - Rolls a D20 with advantage.
-**!roll d20d** - Rolls a D20 with disadvantage.
-**!info** - Displays information about the bot.
-**!coin, !coinflip, !flip** - Flips a coin.
-**!%, !precent, !precentile** - Rolls precentile dice.
+**!help**
+- Displays this help message.
+**!info**
+- Displays information about the bot.
+**!roll, !r**
+- Roll command.
+**!coin, !coinflip, !flip**
+- Flips a coin.
+**!%, !precent, !precentile**
+- Rolls precentile dice.
+**!roll <*optional* dice count><dice type>**
+- Rolls the specified number of dice of the specified type.  *!roll 2d4, !r 4d6, !roll d8*
+**!roll <dice type> +-<modifier>**
+- Rolls the specified number of dice of the specified type and applies the specified modifier.  *!roll d6 +2, !r d4 -1*
+**!roll d20a**
+- Rolls D20 dice with advantage
+**!roll d20d**
+- Rolls D20 dice with disadvantage
+**coin flips and precentile dice cannot be used with other rolls**
 
 **Supported dice are D2, D4, D6, D8, D10, D12, D20, D50, D100, precentile**
-*NOTE: coin, D50, D100, and precentile are not adaptive.*
+*NOTE: coin, D2, D50, D100, and precentile are not adaptive.*
     ''',
-    color=discord.Color.blue())
+color=discord.Color.blue())
 
 client.run(os.getenv('BOT_TOKEN'))
