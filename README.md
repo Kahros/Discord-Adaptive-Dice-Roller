@@ -1,5 +1,4 @@
-# ADR
-Adaptive Dice Roller
+# Adaptive Dice Roller - ADR
 
 A Discord bot that allows users to roll adaptive dice in a server, intended for table-top games, such (but not limited to) as Dungeons and Dragons, and Pathfinder.
 
