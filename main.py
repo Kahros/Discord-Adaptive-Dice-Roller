@@ -14,8 +14,9 @@
 # [] Comment code blocks for future reference
 # [] Strip incoming message to allow for designated dice rolls and modifiers to display seperate totals before adding into final total
 # [/] Add support for D2, D50, D100, and precentile dice
+# [o] Add reroll function
 # ---------------------------------------------------
-version = 'v0.5.0'
+version = 'v0.5.3'
 # ---------------------------------------------------
 import traceback
 import discord
@@ -371,6 +372,19 @@ d50 = D50() # D50 die instance
 d100 = D100() # D100 die instance
 dpercent = Dpercent() # D% die instance
 # ---------------------------------------------------
+def previous_roll(user_request):
+    if user_id not in user_rolls: 
+        user_rolls[user_id] = {} 
+    else:
+        user_rolls[user_id]
+    if 'p_roll' not in user_rolls[user_id]:
+        user_rolls[user_id]['p_roll'] = [] 
+    else:
+        user_rolls[user_id]['p_roll']
+    user_rolls[user_id]['p_roll'] = user_request
+    request = user_rolls[user_id]['p_roll']
+    return request
+
 def coin_flip():
     return 'heads' if random.choice([True, False]) else 'tails'
 
@@ -391,6 +405,10 @@ def extract_dices(request):
     dices = re.findall(r'\d+d\d+', request)
     return dices
 
+#def dice_roll(request):
+   
+
+
 @client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
@@ -401,13 +419,13 @@ async def on_message(message):
     
     if message.author == client.user:
         return
-    elif message.content.startswith('!!error!!'):
+    elif message.content.startswith('!!error!!') or message.content.startswith('!!err!!'):
         await message.channel.send(random.choice(error))
     elif message.content.startswith('!!success!!'):
         await message.channel.send(random.choice(success))
-    elif message.content.startswith('!!failure!!'):
+    elif message.content.startswith('!!failure!!') or message.content.startswith('!!fail!!'):
         await message.channel.send(random.choice(failure))
-    elif message.content.startswith('!version'):
+    elif message.content.startswith('!version') or message.content.startswith('!ver') or message.content.startswith('!v'):
         await message.channel.send(embed=discord.Embed(
             title='Version', 
             description=f'{version}', 
@@ -416,23 +434,39 @@ async def on_message(message):
         await message.channel.send(embed=about_embed)
     elif message.content.startswith('!help'):
         await message.channel.send(embed=help_embed)
-    elif message.content.startswith(('!%','!percent','!percentile')):
+    elif message.content.startswith('!%') or message.content.startswith('!precent') or message.content.startswith('!precentile'):
         percent = dpercent.roll()
         await message.channel.send(embed=discord.Embed(
-title=f"{message.author.display_name} rolled a percentile, **%{sum(percent)}**",
+title=f"{message.author.display_name} rolled a percentile, **{sum(percent)}%**",
 description=f'''
-{'and '.join(map(str, percent))}
+{' and '.join(map(str, percent))}
 ''',
 color=discord.Color.darker_grey()
             ))
-    elif message.content.startswith(('!coin, !coinflip, !flip')):
+    elif message.content.startswith('!coin') or message.content.startswith('!coinflip') or message.content.startswith('!flip'):
         await message.channel.send(embed=discord.Embed(
 title=f'{message.author.display_name} got {coin_flip()}!', 
 color=discord.Color.lighter_grey()))
-    elif message.content.lower().startswith(("!r", "!roll")):
-        user_id = message.author.id
-        print(f'user_id: {user_id}') # Debugging line to check user ID
-        request = message.content[6:].strip().lower()
+    elif message.content.startswith('!rr') or message.content.startswith('!reroll') or message.content.startswith('!re-roll') or message.content.startswith('!re'):
+        user_id = message.author.id # Debugging line to check user ID
+        print(f'user_id: {user_id}')
+        if user_id not in user_rolls:
+            await message.channel.send('You have not rolled any dice yet.')
+            return
+        else:
+            await message.channel.send('Rerolling')
+            request = previous_roll(message)
+            return
+    elif message.content.lower().startswith('!r') or message.content.lower().startswith('!roll'):
+        
+        user_id = message.author.id # Debugging line to check user ID
+        print(f'user_id: {user_id}')
+        if message.content.lower().startswith('!r'):
+            user_request = message.content[3:].strip().lower()
+        else:
+            user_request = message.content[6:].strip().lower()
+        request = previous_roll(user_request)
+        
         print(f'Request: {request}') # Debugging line to check the stripped content of the message
         rolls = extract_dices(request)
         print(f'Rolls: {rolls}') # Debugging line to check the extracted dice rolls
@@ -585,6 +619,10 @@ color=discord.Color.red()
             await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
             return # Return from the function to stop further execution if an error occurs.
         
+        
+
+        
+                
 about_embed = discord.Embed(
 title='About',
 
@@ -622,4 +660,5 @@ description='''
     ''',
 color=discord.Color.blue())
 
-client.run(os.getenv('BOT_TOKEN'))
+client.run('MTMyMzYzNDk2Mjc0MTg1NDIwOQ.G7CgLe.JujAyltZDJYe62VKayYzG82FmFapOG1_gtlXzI')
+#os.getenv('BOT_TOKEN')
