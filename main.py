@@ -16,7 +16,7 @@
 # [/] Add support for D2, D50, D100, and precentile dice
 # [/] Add reroll function
 # ---------------------------------------------------
-version = 'v0.6.0'
+version = 'v0.6.1'
 # ---------------------------------------------------
 import traceback
 import discord
@@ -484,15 +484,17 @@ async def get_dice(request, message):
         if 'd20a' in request:
             result = d20.roll_twice(request)
             die_roll = str(max(result))
+            d20_result = [str(max(result))]
             results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
             total += int(die_roll)
-            results.append(f'||*({d20_result[0]} and {d20_result[1]})*||')
+            results.append(f'||*({result[0]} and {result[1]})*||')
         elif 'd20d' in request:
             result = d20.roll_twice(request)
-            die_roll, d20_result = str(min(result))
+            die_roll = str(min(result))
+            d20_result = [str(min(result))]
             results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
             total += int(die_roll)
-            results.append(f'||*({d20_result[0]} and {d20_result[1]})*||')
+            results.append(f'||*({result[0]} and {result[1]})*||')
         else:
             for roll_str in rolls:
                 num_dice, dice_type = map(int,roll_str.split('d'))
