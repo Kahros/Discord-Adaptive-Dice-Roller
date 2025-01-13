@@ -16,7 +16,7 @@
 # [/] Add support for D2, D50, D100, and precentile dice
 # [/] Add reroll function
 # ---------------------------------------------------
-version = 'v0.5.3'
+version = 'v0.6.0'
 # ---------------------------------------------------
 import traceback
 import discord
@@ -630,6 +630,7 @@ description='''
 This program aims to act as a balanced 'weighted die'. It skews towards more favorable results while punishing too many of them. This offers the chance to have passible rolls without breaking the game and still allows for low/nat-1 rolls - those can be fun too!
 
 Type **'!help'** for more information on how to use this bot.
+*Link to project: https://github.com/Kahros/Discord-Adaptive-Dice-Roller*
     ''',
     color=discord.Color.blue())
 help_embed = discord.Embed(
@@ -653,6 +654,8 @@ description='''
 - Rolls D20 dice with advantage
 **!roll d20d**
 - Rolls D20 dice with disadvantage
+**!reroll, !re-roll, !re, !rr**
+- Rerolls last dice roll for player. *This does not apply to coin flips or precentile dice.*
 **coin flips and precentile dice cannot be used with other rolls**
 
 **Supported dice are D2, D4, D6, D8, D10, D12, D20, D50, D100, precentile**
