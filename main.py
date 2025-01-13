@@ -14,16 +14,17 @@
 # [] Comment code blocks for future reference
 # [] Strip incoming message to allow for designated dice rolls and modifiers to display seperate totals before adding into final total
 # [/] Add support for D2, D50, D100, and precentile dice
-# [o] Add reroll function
+# [/] Add reroll function
 # ---------------------------------------------------
 version = 'v0.5.3'
 # ---------------------------------------------------
 import traceback
 import discord
+import asyncio
 import random
 import re
 import os
-from response import success_message as success, error_message as error, failure_message as failure
+from response import success_message as success, error_message as error, failure_message as failure, reroll_message as reroll
 
 global e_message
 e_message = random.choice(error)
@@ -406,9 +407,6 @@ def extract_dices(request):
     return dices
 
 #def dice_roll(request):
-   
-
-
 @client.event
 async def on_ready():
     print(f'{client.user} has connected to Discord!')
@@ -447,131 +445,136 @@ color=discord.Color.darker_grey()
         await message.channel.send(embed=discord.Embed(
 title=f'{message.author.display_name} got {coin_flip()}!', 
 color=discord.Color.lighter_grey()))
-    elif message.content.startswith('!rr') or message.content.startswith('!reroll') or message.content.startswith('!re-roll') or message.content.startswith('!re'):
+    elif message.content.lower().startswith('!rr') or message.content.lower().startswith('!reroll') or message.content.lower().startswith('!re-roll') or message.content.lower().startswith('!re'):
         user_id = message.author.id # Debugging line to check user ID
         print(f'user_id: {user_id}')
-        if user_id not in user_rolls:
+        if 'p_roll' not in user_rolls[user_id]:
             await message.channel.send('You have not rolled any dice yet.')
             return
         else:
-            await message.channel.send('Rerolling')
-            request = previous_roll(message)
-            return
+            await message.channel.send(random.choice(reroll))
+            await asyncio.sleep(1.5)
+            request = user_rolls[user_id]['p_roll'] # Get the last roll from user_rolls dictionary
+
+        await get_dice(request, message)
     elif message.content.lower().startswith('!r') or message.content.lower().startswith('!roll'):
-        
         user_id = message.author.id # Debugging line to check user ID
-        print(f'user_id: {user_id}')
+        print(f'User id: {user_id}')
         if message.content.lower().startswith('!r'):
             user_request = message.content[3:].strip().lower()
         else:
             user_request = message.content[6:].strip().lower()
         request = previous_roll(user_request)
+        await get_dice(request, message)
         
-        print(f'Request: {request}') # Debugging line to check the stripped content of the message
-        rolls = extract_dices(request)
-        print(f'Rolls: {rolls}') # Debugging line to check the extracted dice rolls
-        modifiers = extract_modifiers(request)
-        print(f'Modifiers: {modifiers}') # Debugging line to check the extracted modifiers
-        results = []
-        total = 0
-        dice_type = 0
-        die_roll = 0
-        
-        try:
-            if 'd20a' in request:
-                result = d20.roll_twice(request)
-                die_roll = str(max(result))
-                results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-                total += int(die_roll)
-                results.append(f'||*({result[0]} and {result[1]})*||')
-            elif 'd20d' in request:
-                result = d20.roll_twice(request)
-                die_roll = str(min(result))
-                results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-                total += int(die_roll)
-                results.append(f'||*({result[0]} and {result[1]})*||')
-            else:
-                for roll_str in rolls:
-                    num_dice, dice_type = map(int,roll_str.split('d'))
-                    if dice_type == 2:
-                        for i in range(num_dice):
-                            result = d2.roll(request)
-                            results.append((str(result)))
-                            total += result
-                        results.append(f'*(from {num_dice}D2)*')
-                    if dice_type == 4:
-                        for i in range(num_dice):
-                            result = d4.roll(request)
-                            results.append((str(result)))
-                            total += result
-                        results.append(f'*(from {num_dice}D4)*')
-                    elif dice_type == 6:
-                        for i in range(num_dice):
-                            result = d6.roll(request)
-                            results.append((str(result)))
-                            total += result
-                        results.append(f'*(from {num_dice}D6)*')
-                    elif dice_type == 8:
-                        for i in range(num_dice):
-                            result = d8.roll(request)
-                            results.append((str(result)))
-                            total += result
-                        results.append(f'*(from {num_dice}D8)*')
-                    elif dice_type == 10:
-                        for i in range(num_dice):
-                            result = d10.roll(request)
-                            results.append((str(result)))
-                            total += result
-                        results.append(f'*(from {num_dice}D10)*')
-                    elif dice_type == 12:
-                        for i in range(num_dice):
-                            result = d12.roll(request)
-                            results.append((str(result)))
-                            total += result
-                        results.append(f'*(from {num_dice}D12)*')
-                    elif dice_type == 20:
-                        for i in range(num_dice):
-                            result = d20.roll(request)
-                            die_roll = str(result)
-                            results.append(str(result))
-                            total += result
-                        results.append(f'*(from {num_dice}D20)*')
-                    elif dice_type == 50:
-                        for i in range(num_dice):
-                            result = d50.roll(request)
-                            results.append(str(result))
-                            total += result
-                        results.append(f'*(from {num_dice}D50)*')
-                    elif dice_type == 100:
-                        for i in range(num_dice):
-                            result = d100.roll(request)
-                            results.append(str(result))
-                            total += result
-                        results.append(f'*(from {num_dice}D100)*')
-                        
-                        total += sum(modifiers) # Add modifiers
+async def get_dice(request, message):
+    results = []
+    d20_result = []
+    total = 0
+    dice_type = 0
+    die_roll = 0
             
-            print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
-            print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
-            print(f'results:{results}') # Debugging line to check the initial state of 'results' list
-            print(f'total:{total}') # Debugging line to check the initial state of 'total'
-            print(f'user_rolls: {user_rolls}') # Debugging line to check the state of 'user_rolls'
-            print(f'D4 average: {d4.Average()}') # Debugging line to check the average of the D4 die
-            print(f'D6 average: {d6.Average()}') # Debugging line to check the average of the D6 die
-            print(f'D8 average: {d8.Average()}') # Debugging line to check the average of the D8 die
-            print(f'D10 average: {d10.Average()}') # Debugging line to check the average of the D10 die
-            print(f'D12 average: {d12.Average()}') # Debugging line to check the average of the D12 die
-            print(f'D20 average: {d20.Average()}') # Debugging line to check the average of the D20 die
-            dice_embed = discord.Embed(
-title=f"{message.author.display_name} rolled a **{total}**",
+    print(f'Request: {request}') # Debugging line to check the stripped content of the message
+    rolls = extract_dices(request)
+    print(f'Rolls: {rolls}') # Debugging line to check the extracted dice rolls
+    modifiers = extract_modifiers(request)
+    print(f'Modifiers: {modifiers}') # Debugging line to check the extracted modifiers
+    print(f'D20 results: {d20_result}')
+    try:
+        if 'd20a' in request:
+            result = d20.roll_twice(request)
+            die_roll = str(max(result))
+            results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
+            total += int(die_roll)
+            results.append(f'||*({d20_result[0]} and {d20_result[1]})*||')
+        elif 'd20d' in request:
+            result = d20.roll_twice(request)
+            die_roll, d20_result = str(min(result))
+            results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
+            total += int(die_roll)
+            results.append(f'||*({d20_result[0]} and {d20_result[1]})*||')
+        else:
+            for roll_str in rolls:
+                num_dice, dice_type = map(int,roll_str.split('d'))
+                if dice_type == 2:
+                    for i in range(num_dice):
+                        result = d2.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'*(from {num_dice}D2)*')
+                elif dice_type == 4:
+                    for i in range(num_dice):
+                        result = d4.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'*(from {num_dice}D4)*')
+                elif dice_type == 6:
+                    for i in range(num_dice):
+                        result = d6.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'*(from {num_dice}D6)*')
+                elif dice_type == 8:
+                    for i in range(num_dice):
+                        result = d8.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'*(from {num_dice}D8)*')
+                elif dice_type == 10:
+                    for i in range(num_dice):
+                        result = d10.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'*(from {num_dice}D10)*')
+                elif dice_type == 12:
+                    for i in range(num_dice):
+                        result = d12.roll(request)
+                        results.append((str(result)))
+                        total += result
+                    results.append(f'*(from {num_dice}D12)*')
+                elif dice_type == 20:
+                    for i in range(num_dice):
+                        result = d20.roll(request)
+                        die_roll = str(d20_result)
+                        results.append(str(result)) and d20_result.append(str(result))
+                        total += result
+                    results.append(f'*(from {num_dice}D20)*')
+                elif dice_type == 50:
+                    for i in range(num_dice):
+                        result = d50.roll(request)
+                        results.append(str(result))
+                        total += result
+                    results.append(f'*(from {num_dice}D50)*')
+                elif dice_type == 100:
+                    for i in range(num_dice):
+                        result = d100.roll(request)
+                        results.append(str(result))
+                        total += result
+                    results.append(f'*(from {num_dice}D100)*')
+                    
+            total += sum(modifiers) # Add modifiers
+            
+        print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
+        print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
+        print(f'results:{results}') # Debugging line to check the initial state of 'results' list
+        print(f'total:{total}') # Debugging line to check the initial state of 'total'
+        print(f'user_rolls: {user_rolls}') # Debugging line to check the state of 'user_rolls'
+        print(f'D4 average: {d4.Average()}') # Debugging line to check the average of the D4 die
+        print(f'D6 average: {d6.Average()}') # Debugging line to check the average of the D6 die
+        print(f'D8 average: {d8.Average()}') # Debugging line to check the average of the D8 die
+        print(f'D10 average: {d10.Average()}') # Debugging line to check the average of the D10 die
+        print(f'D12 average: {d12.Average()}') # Debugging line to check the average of the D12 die
+        print(f'D20 average: {d20.Average()}') # Debugging line to check the average of the D20 die
+        dice_embed = discord.Embed(
+    title=f"{message.author.display_name} rolled a **{total}**",
 description=f'''
 Die Results: {', '.join(results)}
 Modifiers: {sum(modifiers)}
 Total: **{total}**
 ''',
 color=discord.Color.purple()
-)
-            success_embed = discord.Embed(
+    )
+        success_embed = discord.Embed(
 title=f"**!!CRITICAL SUCCESS!!**",
 description=f'''
 {message.author.display_name} rolled a **20**!!
@@ -581,8 +584,8 @@ Modifiers: {sum(modifiers)}
 Total: **{total}**
 ''',
 color=discord.Color.green()
-)
-            failure_embed = discord.Embed(
+    )
+        failure_embed = discord.Embed(
 title=f"**!!CRITICAL FAILURE!!**",
 description=f'''
 {message.author.display_name} rolled a **1!!**
@@ -592,37 +595,34 @@ Modifiers: {sum(modifiers)}
 Total: **{total}**
 ''',
 color=discord.Color.red()
-)
-            
-            if total == 0:
-                await message.channel.send(f'{message.author.display_name}. {e_message}')
-                return
-            if 'd20a' in request or 'd20d' in request or dice_type == 20:
-                for i in results:
-                    if i == '20':
-                        await message.channel.send(embed=success_embed)
-                        await message.channel.send(f'{random.choice(success)}')
-                        return
-                    if i == '1':
-                        await message.channel.send(embed=failure_embed)
-                        await message.channel.send(f'{random.choice(failure)}')
-                        return
-                    else:
-                        continue
-                else:
-                    await message.channel.send(embed=dice_embed)
+)        
+
+        if total == 0:
+            await message.channel.send(f'{message.author.display_name}. {e_message}')
+            return
+        if 'd20a' in request or 'd20d' in request or dice_type == 20:
+            for i in d20_result:
+                if i == '20':
+                    await message.channel.send(embed=success_embed)
+                    await message.channel.send(f'{random.choice(success)}')
                     return
+                if i == '1':
+                    await message.channel.send(embed=failure_embed)
+                    await message.channel.send(f'{random.choice(failure)}')
+                    return
+                else:
+                    continue
             else:
                 await message.channel.send(embed=dice_embed)
-        except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
-            traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
-            await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
-            return # Return from the function to stop further execution if an error occurs.
-        
-        
+                return
+        else:
+            await message.channel.send(embed=dice_embed)
+    except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
+        traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
+        await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
+        return # Return from the function to stop further execution if an error occurs.
+    return
 
-        
-                
 about_embed = discord.Embed(
 title='About',
 

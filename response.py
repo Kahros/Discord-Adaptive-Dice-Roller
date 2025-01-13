@@ -65,6 +65,26 @@ failure_message = [
     "I think a village lost their....nevermind."
 ]
 
+reroll_message = [
+    "You know what they say, 'if at first you don't succeed...'",
+    "I bet you were *so* close to making it...",
+    "I guess the last one wasn't good enough... :rolling_eyes:",
+    "Try a different approach next time?",
+    "Second, or third... maybe even fourth try?",
+    "Let's see if we can do better on the next one.",
+    "Maybe you should ask for help from someone who knows how to roll dice properly.",
+    "You know, sometimes it pays to listen to advice. Maybe I could teach you how to roll them sometime?",
+    "Just not good enough for you, huh?",
+    "Maybe it's just a fluke. Let's try again.",
+    "Let's give the dice another chance, shall we?",
+    "You know what they say about second chances...",
+    "Sometimes it's better to just accept defeat gracefully.",
+    "Sure, I'll give you another chance.",
+    "I'm sure the dice are just having a little fun with you.",
+    "How distinct of you, using the same dice over and over again.",
+    "Something something insanity..."
+]
+
 error_message = [
     'Someone, *cough cough*, broke it again! Please try again later.',
     'Stop breaking things please.',
