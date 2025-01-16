@@ -14,8 +14,9 @@ Features:
 - Use of Advantage and Disadvantage D20 dice rolls (this will affect the probability ratio).
 - Concise result layout, showcasing what dice was used, what the total amount for modifiers are, and the total result.
 - Ability to utilize multiple different dice and modifiers in the same roll.
+- Reroll past roll easily, regardless of message length.
 - Snarkybot - the dice bot will provide a snarky remark based on natural success (nat20) or natural failures (nat1).  Natural success and failures only apply to D20 dice rolls.  
-    - Will also provide a snarky remark when there is an error.
+    - Will also provide a snarky remark when there is an error or when a reroll is requested.
 
 Upcoming features:
 - ~~Reroll: Ability to reroll of the last roll that the player has sent.  This is per player.~~
