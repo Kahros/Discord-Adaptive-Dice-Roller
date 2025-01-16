@@ -16,7 +16,7 @@
 # [/] Add support for D2, D50, D100, and precentile dice
 # [/] Add reroll function
 # ---------------------------------------------------
-version = 'v0.6.1'
+version = 'v0.6.6'
 # ---------------------------------------------------
 import traceback
 import discord
@@ -358,8 +358,8 @@ class Dpercent():
         pass
     
     def roll(self):
-        tens = random.choice(list(range(0, 101, 10)))
-        ones = random.choice(list(range(0, 11)))
+        tens = random.choice(list(range(0, 91, 10)))
+        ones = random.choice(list(range(0, 10)))
         return tens, ones
 # ---------------------------------------------------
 d2 = D2() # D2 die instance
@@ -402,8 +402,11 @@ def extract_modifiers(request):
     return modifiers
 
 def extract_dices(request):
+    request = request.replace('d20a', '')
+    request = request.replace('d20d', '')
     request = re.sub(r'(?<!\d)d', '1d', request)
     dices = re.findall(r'\d+d\d+', request)
+    # dices.append(d20ad)
     return dices
 
 #def dice_roll(request):
@@ -434,8 +437,9 @@ async def on_message(message):
         await message.channel.send(embed=help_embed)
     elif message.content.startswith('!%') or message.content.startswith('!precent') or message.content.startswith('!precentile'):
         percent = dpercent.roll()
+        result = 100 if sum(percent) == 0 else sum(percent)
         await message.channel.send(embed=discord.Embed(
-title=f"{message.author.display_name} rolled a percentile, **{sum(percent)}%**",
+title=f"{message.author.display_name} rolled a percentile, **{result}%**",
 description=f'''
 {' and '.join(map(str, percent))}
 ''',
@@ -468,142 +472,159 @@ color=discord.Color.lighter_grey()))
         await get_dice(request, message)
         
 async def get_dice(request, message):
+    rolls = extract_dices(request)
+    modifiers = extract_modifiers(request)
     results = []
-    d20_result = []
     total = 0
     dice_type = 0
-    die_roll = 0
-            
-    print(f'Request: {request}') # Debugging line to check the stripped content of the message
-    rolls = extract_dices(request)
-    print(f'Rolls: {rolls}') # Debugging line to check the extracted dice rolls
-    modifiers = extract_modifiers(request)
-    print(f'Modifiers: {modifiers}') # Debugging line to check the extracted modifiers
-    print(f'D20 results: {d20_result}')
+    die_roll = []
+    all_dice = []
+
     try:
         if 'd20a' in request:
             result = d20.roll_twice(request)
-            die_roll = str(max(result))
-            d20_result = [str(max(result))]
-            results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-            total += int(die_roll)
+            die_roll.append(str(max(result)))
+            # d20_result.append[str(max(result))]
+            results.append(str(max(result))) if die_roll != '20' or die_roll != '1' else results
+            total += int(max(result))
             results.append(f'||*({result[0]} and {result[1]})*||')
+            all_dice.append('d20a')
         elif 'd20d' in request:
             result = d20.roll_twice(request)
-            die_roll = str(min(result))
-            d20_result = [str(min(result))]
-            results.append(die_roll) if die_roll != '20' or die_roll != '1' else results
-            total += int(die_roll)
+            die_roll.append(str(min(result)))
+            # d20_result.append[str(min(result))]
+            results.append(str(min(result))) if die_roll != '20' or die_roll != '1' else results
+            total += int(min(result))
             results.append(f'||*({result[0]} and {result[1]})*||')
-        else:
-            for roll_str in rolls:
-                num_dice, dice_type = map(int,roll_str.split('d'))
-                if dice_type == 2:
-                    for i in range(num_dice):
-                        result = d2.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'*(from {num_dice}D2)*')
-                elif dice_type == 4:
-                    for i in range(num_dice):
-                        result = d4.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'*(from {num_dice}D4)*')
-                elif dice_type == 6:
-                    for i in range(num_dice):
-                        result = d6.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'*(from {num_dice}D6)*')
-                elif dice_type == 8:
-                    for i in range(num_dice):
-                        result = d8.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'*(from {num_dice}D8)*')
-                elif dice_type == 10:
-                    for i in range(num_dice):
-                        result = d10.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'*(from {num_dice}D10)*')
-                elif dice_type == 12:
-                    for i in range(num_dice):
-                        result = d12.roll(request)
-                        results.append((str(result)))
-                        total += result
-                    results.append(f'*(from {num_dice}D12)*')
-                elif dice_type == 20:
-                    for i in range(num_dice):
-                        result = d20.roll(request)
-                        die_roll = str(d20_result)
-                        results.append(str(result)) and d20_result.append(str(result))
-                        total += result
-                    results.append(f'*(from {num_dice}D20)*')
-                elif dice_type == 50:
-                    for i in range(num_dice):
-                        result = d50.roll(request)
-                        results.append(str(result))
-                        total += result
-                    results.append(f'*(from {num_dice}D50)*')
-                elif dice_type == 100:
-                    for i in range(num_dice):
-                        result = d100.roll(request)
-                        results.append(str(result))
-                        total += result
-                    results.append(f'*(from {num_dice}D100)*')
-                    
-            total += sum(modifiers) # Add modifiers
+            all_dice.append('d20d')
+        for roll_str in rolls:
+            num_dice, dice_type = map(int,roll_str.split('d'))
+            if dice_type == 2:
+                for i in range(num_dice):
+                    result = d2.roll(request)
+                    results.append((str(result)))
+                    total += result
+                results.append(f'*(from {num_dice}D2)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 4:
+                for i in range(num_dice):
+                    result = d4.roll(request)
+                    results.append((str(result)))
+                    total += result
+                results.append(f'*(from {num_dice}D4)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 6:
+                for i in range(num_dice):
+                    result = d6.roll(request)
+                    results.append((str(result)))
+                    total += result
+                results.append(f'*(from {num_dice}D6)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 8:
+                for i in range(num_dice):
+                    result = d8.roll(request)
+                    results.append((str(result)))
+                    total += result
+                results.append(f'*(from {num_dice}D8)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 10:
+                for i in range(num_dice):
+                    result = d10.roll(request)
+                    results.append((str(result)))
+                    total += result
+                results.append(f'*(from {num_dice}D10)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 12:
+                for i in range(num_dice):
+                    result = d12.roll(request)
+                    results.append((str(result)))
+                    total += result
+                results.append(f'*(from {num_dice}D12)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 20:
+                for i in range(num_dice):
+                    result = d20.roll(request)
+                    die_roll.append(str(result))
+                    results.append(str(result))
+                    total += result
+                results.append(f'*(from {num_dice}D20)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 50:
+                for i in range(num_dice):
+                    result = d50.roll(request)
+                    results.append(str(result))
+                    total += result
+                results.append(f'*(from {num_dice}D50)*')
+                all_dice.append(str(dice_type))
+            elif dice_type == 100:
+                for i in range(num_dice):
+                    result = d100.roll(request)
+                    results.append(str(result))
+                    total += result
+                results.append(f'*(from {num_dice}D100)*')
+                all_dice.append(str(dice_type))
+            else:
+                pass
+    except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
+        traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
+        await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
+        return # Return from the function to stop further execution if an error occurs.
+    total += sum(modifiers) # Add modifiers
+
+    print(f'Request: {request}') # Debugging line to check the stripped content of the message
+    print(f'Rolls: {rolls}') # Debugging line to check the extracted dice rolls
+    print(f'Modifiers: {modifiers}') # Debugging line to check the extracted modifiers
+    print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
+    print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
+    print(f'All dices: {all_dice}')
+    print(f'results:{results}') # Debugging line to check the initial state of 'results' list
+    print(f'total:{total}') # Debugging line to check the initial state of 'total'
+    print(f'user_rolls: {user_rolls}') # Debugging line to check the state of 'user_rolls'
+    print(f'D4 average: {d4.Average()}') # Debugging line to check the average of the D4 die
+    print(f'D6 average: {d6.Average()}') # Debugging line to check the average of the D6 die
+    print(f'D8 average: {d8.Average()}') # Debugging line to check the average of the D8 die
+    print(f'D10 average: {d10.Average()}') # Debugging line to check the average of the D10 die
+    print(f'D12 average: {d12.Average()}') # Debugging line to check the average of the D12 die
+    print(f'D20 average: {d20.Average()}') # Debugging line to check the average of the D20 die
             
-        print(f'die roll:{die_roll}') # Debugging line to check the initial state of 'die_roll'
-        print(f'dice type:{dice_type}')  # Debugging line to check the initial state of 'dice_type'
-        print(f'results:{results}') # Debugging line to check the initial state of 'results' list
-        print(f'total:{total}') # Debugging line to check the initial state of 'total'
-        print(f'user_rolls: {user_rolls}') # Debugging line to check the state of 'user_rolls'
-        print(f'D4 average: {d4.Average()}') # Debugging line to check the average of the D4 die
-        print(f'D6 average: {d6.Average()}') # Debugging line to check the average of the D6 die
-        print(f'D8 average: {d8.Average()}') # Debugging line to check the average of the D8 die
-        print(f'D10 average: {d10.Average()}') # Debugging line to check the average of the D10 die
-        print(f'D12 average: {d12.Average()}') # Debugging line to check the average of the D12 die
-        print(f'D20 average: {d20.Average()}') # Debugging line to check the average of the D20 die
-        dice_embed = discord.Embed(
+    dice_embed = discord.Embed(
     title=f"{message.author.display_name} rolled a **{total}**",
-description=f'''
-Die Results: {', '.join(results)}
-Modifiers: {sum(modifiers)}
-Total: **{total}**
-''',
-color=discord.Color.purple()
-    )
-        success_embed = discord.Embed(
-title=f"**!!CRITICAL SUCCESS!!**",
-description=f'''
-{message.author.display_name} rolled a **20**!!
+    description=f'''
+    Die Results: {', '.join(results)}
+    Modifiers: {sum(modifiers)}
+    Total: **{total}**
+    ''',
+    color=discord.Color.purple()
+        )
+    success_embed = discord.Embed(
+    title=f"**!!CRITICAL SUCCESS!!**",
+    description=f'''
+    {message.author.display_name} rolled a **20**!!
 
-Die Results: **20!!** {', '.join(results)}
-Modifiers: {sum(modifiers)}
-Total: **{total}**
-''',
-color=discord.Color.green()
-    )
-        failure_embed = discord.Embed(
-title=f"**!!CRITICAL FAILURE!!**",
-description=f'''
-{message.author.display_name} rolled a **1!!**
+    Die Results: {', '.join(results)}
+    Modifiers: {sum(modifiers)}
+    Total: **{total}**
+    ''',
+    color=discord.Color.green()
+        )
+    failure_embed = discord.Embed(
+    title=f"**!!CRITICAL FAILURE!!**",
+    description=f'''
+    {message.author.display_name} rolled a **1!!**
 
-Die Results: **1!!** {', '.join(results)}
-Modifiers: {sum(modifiers)}
-Total: **{total}**
-''',
-color=discord.Color.red()
-)        
-
-        if total == 0:
+    Die Results: {', '.join(results)}
+    Modifiers: {sum(modifiers)}
+    Total: **{total}**
+    ''',
+    color=discord.Color.red()
+    )        
+    
+    try:
+        if all_dice == []:
             await message.channel.send(f'{message.author.display_name}. {e_message}')
             return
-        if 'd20a' in request or 'd20d' in request or dice_type == 20:
-            for i in d20_result:
+        if 'd20a' in all_dice or 'd20d' in all_dice or '20' in all_dice:
+            for i in die_roll:
                 if i == '20':
                     await message.channel.send(embed=success_embed)
                     await message.channel.send(f'{random.choice(success)}')
@@ -612,18 +633,21 @@ color=discord.Color.red()
                     await message.channel.send(embed=failure_embed)
                     await message.channel.send(f'{random.choice(failure)}')
                     return
-                else:
-                    continue
-            else:
-                await message.channel.send(embed=dice_embed)
-                return
-        else:
+                else:  
+                    await message.channel.send(embed=dice_embed)
+                    return
+        else:  
             await message.channel.send(embed=dice_embed)
+            return
     except Exception as e: # Catch any exceptions that occur during the process and print them for debugging purposes
         traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
         await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
         return # Return from the function to stop further execution if an error occurs.
     return
+
+
+
+
 
 about_embed = discord.Embed(
 title='About',
@@ -634,7 +658,8 @@ This program aims to act as a balanced 'weighted die'. It skews towards more fav
 Type **'!help'** for more information on how to use this bot.
 *Link to project: https://github.com/Kahros/Discord-Adaptive-Dice-Roller*
     ''',
-    color=discord.Color.blue())
+color=discord.Color.blue())
+
 help_embed = discord.Embed(
 title='**Commands:**',
 description='''
