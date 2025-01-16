@@ -18,6 +18,7 @@ Features:
     - Will also provide a snarky remark when there is an error.
 
 Upcoming features:
+
 ~~- Reroll: Ability to reroll of the last roll that the player has sent.  This is per player.~~
 - Calculate modifiers per dice type, independent from total modifiers. 
 - Anything else requested.
