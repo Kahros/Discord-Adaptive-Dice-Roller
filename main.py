@@ -644,11 +644,6 @@ async def get_dice(request, message):
         traceback.print_exc() # Print detailed information about the exception, including its type, value, and a traceback of the stack where it occurred. This is useful for debugging.
         await message.channel.send(f'{message.author.display_name}.  {e_message}') # Send a message to the channel indicating that there was an error with the request.
         return # Return from the function to stop further execution if an error occurs.
-    return
-
-
-
-
 
 about_embed = discord.Embed(
 title='About',
