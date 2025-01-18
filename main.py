@@ -633,6 +633,10 @@ async def get_dice(request, message):
                     await message.channel.send(embed=failure_embed)
                     await message.channel.send(f'{random.choice(failure)}')
                     return
+                else:
+                    continue
+            await message.channel.send(embed=dice_embed)
+            return
         else:  
             await message.channel.send(embed=dice_embed)
             return
@@ -687,4 +691,4 @@ description='''
     ''',
 color=discord.Color.blue())
 
-client.run(os.getenv('BOT_TOKEN'))
+client.run('MTMyMzYzNDk2Mjc0MTg1NDIwOQ.GxtE15.BVU9AjdnmFL-5GK4PZkMeU7w0fM_0A9saJ3Ouc') #os.getenv('BOT_TOKEN'))
