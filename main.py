@@ -16,7 +16,7 @@
 # [/] Add support for D2, D50, D100, and precentile dice
 # [/] Add reroll function
 # ---------------------------------------------------
-version = 'v0.6.6'
+version = 'v0.6.7'
 # ---------------------------------------------------
 import traceback
 import discord
