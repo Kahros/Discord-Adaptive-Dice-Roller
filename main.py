@@ -624,7 +624,7 @@ async def get_dice(request, message):
             await message.channel.send(f'{message.author.display_name}. {e_message}')
             return
         if 'd20a' in all_dice or 'd20d' in all_dice or '20' in all_dice:
-            for i in range(die_roll):
+            for i in (die_roll):
                 if i == '20':
                     await message.channel.send(embed=success_embed)
                     await message.channel.send(f'{random.choice(success)}')
@@ -632,9 +632,6 @@ async def get_dice(request, message):
                 if i == '1':
                     await message.channel.send(embed=failure_embed)
                     await message.channel.send(f'{random.choice(failure)}')
-                    return
-                else:  
-                    await message.channel.send(embed=dice_embed)
                     return
         else:  
             await message.channel.send(embed=dice_embed)
