@@ -22,6 +22,7 @@ Upcoming features:
 - ~~Reroll: Ability to reroll of the last roll that the player has sent.  This is per player.~~
 - Calculate modifiers per dice type, independent from total modifiers.
 - User/player data purge after timeout (to conserve memory).
+- Roll presets
 - Anything else requested.
 
 
